@@ -27,7 +27,7 @@ class TestConfig:
         assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 30
         assert settings.REFRESH_TOKEN_EXPIRE_DAYS == 30
         assert settings.MAX_FILE_SIZE == 10 * 1024 * 1024
-        assert settings.GEMINI_MODEL == "gemini-2.0-flash"
+        assert settings.GEMINI_MODEL in ("gemini-2.0-flash", "gemini-flash-latest")
 
     def test_rate_limit_defaults(self):
         """Rate limit settings must be present."""

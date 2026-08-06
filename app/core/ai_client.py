@@ -16,11 +16,12 @@ logger = structlog.get_logger(__name__)
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
 FALLBACK_MODELS = [
+    "gemini-flash-latest",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-2.0-flash-lite",
     settings.GEMINI_MODEL,
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
 ]
 
 
