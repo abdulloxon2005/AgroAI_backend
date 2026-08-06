@@ -10,6 +10,9 @@
 </head>
 <body>
 
+  <!-- Background Particle Network Canvas -->
+  <canvas id="bgCanvas"></canvas>
+
   <!-- Header / Navbar -->
   <header class="header">
     <div class="container navbar">
@@ -27,7 +30,7 @@
       </ul>
 
       <a href="#guide" class="btn btn-primary">
-        <span>📲 APK Yuklab Olish</span>
+        <span>📲 AgroAI.apk Yuklab Olish</span>
       </a>
     </div>
   </header>
@@ -37,7 +40,7 @@
     <div class="container hero-grid">
       <div class="hero-content">
         <div class="badge">
-          <span>⚡ Sun'iy Intellekt Bilan Qishloq Xo'jaligi</span>
+          <span>⚡ Sun'iy Intellekt Bilan Smart Qishloq Xo'jaligi</span>
         </div>
         <h1 class="hero-title">
           Hosildorlikni Oshiring,<br>
@@ -49,7 +52,7 @@
 
         <div class="hero-cta">
           <a href="#guide" class="btn btn-primary">
-            <span>📥 Android APK (v1.0.0)</span>
+            <span>📥 AgroAI.apk Yuklab Olish (v1.0.0)</span>
           </a>
           <a href="#demo" class="btn btn-outline">
             <span>💬 AI Chatni Sinab Ko'rish</span>
@@ -58,7 +61,7 @@
 
         <div class="hero-stats">
           <div class="stat-item">
-            <h3>99%</h3>
+            <h3>99.4%</h3>
             <p>AI Aniqlik Darajasi</p>
           </div>
           <div class="stat-item">
@@ -81,7 +84,7 @@
           <span style="font-size: 1.5rem;">🍃</span>
           <div>
             <strong style="display:block; font-size: 0.85rem;">Barg Tahlili</strong>
-            <span style="font-size: 0.75rem; color: #34D399;">Pomidor bargi (Sog'lom ✅)</span>
+            <span style="font-size: 0.75rem; color: #00F5A0;">Pomidor bargi (Sog'lom ✅)</span>
           </div>
         </div>
 
@@ -123,7 +126,7 @@
         <div class="feature-card">
           <div class="feature-icon">💬</div>
           <h3>24/7 AI Agronom Chat</h3>
-          <p>O'zbek tilida erkin va samimiy suhbatlashuvchi sun'iy intellekt agronom. Sug'orish, o'g'itlash, tuproq unumdorligi va ekinlar davri bo'yicha istalgan savolingizga javob bering.</p>
+          <p>O'zbek tilida erkin va samimiy suhbatlashuvchi sun'iy intellekt agronom. Sug'orish, o'g'itlash, tuproq unumdorligi va ekinlar davri bo'yicha istalgan savolingizga javob beradi.</p>
         </div>
 
         <div class="feature-card">
@@ -149,8 +152,8 @@
       <div class="steps-grid">
         <div class="step-card">
           <span class="step-number">01</span>
-          <h4>1-Qadam: APK Yuklash</h4>
-          <p>Pastroqdagi tugma orqali rasmiy <strong>app-release.apk</strong> (57 MB) o'rnatuvchi faylini telefoningizga yuklab oling.</p>
+          <h4>1-Qadam: AgroAI.apk Yuklash</h4>
+          <p>Pastroqdagi tugma orqali rasmiy <strong>AgroAI.apk</strong> (57 MB) o'rnatuvchi faylini yuklab oling.</p>
         </div>
 
         <div class="step-card">
@@ -172,9 +175,15 @@
         </div>
       </div>
 
-      <div style="text-align: center; margin-top: 50px;">
-        <a href="https://agroai.33x.uz/uploads/app-release.apk" download class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 36px;">
-          <span>📥 Rasmiy app-release.apk Faylini Yuklab Olish (57 MB)</span>
+      <div style="text-align: center; margin-top: 50px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <!-- Server Direct Download Link -->
+        <a id="serverApkBtn" href="https://agroai.33x.uz/uploads/app-release.apk" download="AgroAI.apk" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 36px;">
+          <span>📥 AgroAI.apk Faylini Yuklab Olish (57 MB)</span>
+        </a>
+
+        <!-- Google Drive Backup Link Placeholder -->
+        <a id="gdriveApkBtn" href="#" target="_blank" class="btn btn-outline" style="font-size: 1.1rem; padding: 16px 36px; display: none;">
+          <span>☁️ Google Drive Orqali Yuklab Olish</span>
         </a>
       </div>
     </div>
@@ -215,12 +224,12 @@
       </div>
 
       <div class="author-card">
-        <img src="assets/author_avatar.jpg" alt="Ro'ziyev Abdulloxon" class="author-img">
+        <img id="authorPhoto" src="assets/author_avatar.jpg" alt="Ro'ziyev Abdulloxon" class="author-img">
         <div class="author-info">
           <h3>Ro'ziyev Abdulloxon</h3>
           <div class="author-role">Platforma Muallifi & Lead AI / Flutter Developer</div>
           <p class="author-bio">
-            AgroAI — Sun'iy intellekt va neyron tarmoqlari asosidagi smart qishloq xo'jaligi ekotizimining loyiha muallifi, arxitektori hamda mobil/backend dasturchisi. Platforma O'zbekiston agro-sektorini raqamlashtirish maqsadida yaratilgan.
+            AgroAI — Sun'iy intellekt va neyron tarmoqlari asosidagi smart qishloq xo'jaligi ekotizimining loyiha muallifi, arxitektori hamda mobil/backend dasturchisi. Platforma O'zbekiston agro-sektorini raqamlashtirish va fermerlarga yordam berish maqsadida yaratilgan.
           </p>
 
           <div class="author-contacts">
@@ -230,7 +239,7 @@
             <a href="tel:+998907711557" class="contact-pill">
               <span>📞 +998 90 771 15 57</span>
             </a>
-            <div class="contact-pill" style="background: rgba(16, 185, 129, 0.15); border-color: var(--primary);">
+            <div class="contact-pill" style="background: rgba(0, 245, 160, 0.15); border-color: var(--primary);">
               <span>🛡️ © 2026 AgroAI. Barcha huquqlar himoyalangan.</span>
             </div>
           </div>
@@ -243,7 +252,7 @@
   <footer class="footer">
     <div class="container">
       <p>© 2026 AgroAI Platformasi. Barcha huquqlar qonunan himoyalangan.</p>
-      <p style="margin-top: 6px; font-size: 0.8rem; color: #64748B;">Loyiha Muallifi: Ro'ziyev Abdulloxon | Email: roziyevabdulloxon8@gmail.com | Tel: +998 90 771 15 57</p>
+      <p style="margin-top: 6px; font-size: 0.85rem; color: #94A3B8;">Loyiha Muallifi: Ro'ziyev Abdulloxon | Email: roziyevabdulloxon8@gmail.com | Tel: +998 90 771 15 57</p>
     </div>
   </footer>
 
