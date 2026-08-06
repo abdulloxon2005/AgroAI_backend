@@ -64,12 +64,29 @@ app.include_router(api_router, prefix="/api/v1")
 app.include_router(ws_router, prefix="/ws")
 
 # --- Static Files & Web Landing Page ---
+from fastapi.responses import FileResponse
+
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
-web_dir = Path(__file__).resolve().parents[2] / "web"
+web_dir = Path(__file__).resolve().parents[1] / "web"
+if not web_dir.exists():
+    web_dir = Path(__file__).resolve().parents[2] / "web"
+
 if web_dir.exists():
-    app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
+    app.mount("/assets", StaticFiles(directory=str(web_dir / "assets")), name="web_assets")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_index():
+        return FileResponse(web_dir / "index.html")
+
+    @app.get("/style.css", include_in_schema=False)
+    async def serve_css():
+        return FileResponse(web_dir / "style.css")
+
+    @app.get("/script.js", include_in_schema=False)
+    async def serve_js():
+        return FileResponse(web_dir / "script.js")
 
 
 # --- Health Check ---
