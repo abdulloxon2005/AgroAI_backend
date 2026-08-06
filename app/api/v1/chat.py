@@ -3,6 +3,7 @@ AgroAI — Chat Endpoints
 AI Agronom chat sessions and messages via Gemini.
 """
 import uuid
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -25,6 +26,18 @@ router = APIRouter(prefix="/chat", tags=["AI Chat"])
 
 # Maximum number of history messages sent as context to the AI
 _MAX_CONTEXT_MESSAGES = 20
+
+
+def _parse_uuid(val: Any) -> uuid.UUID:
+    if isinstance(val, uuid.UUID):
+        return val
+    try:
+        return uuid.UUID(str(val))
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=400,
+            detail="Chat sessiya ID formati noto'g'ri. Iltimos, yangi suhbat boshlang."
+        )
 
 
 @router.post("/sessions", response_model=ChatSessionResponse)
@@ -71,16 +84,18 @@ async def list_sessions(
 
 @router.post("/sessions/{session_id}/messages", response_model=ChatMessageResponse)
 async def send_message(
-    session_id: uuid.UUID,
+    session_id: str,
     message_in: ChatMessageCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Send message to a session and get AI response."""
+    session_uuid = _parse_uuid(session_id)
+
     # Verify session belongs to user
     result = await db.execute(
         select(ChatSession).filter(
-            ChatSession.id == session_id,
+            ChatSession.id == session_uuid,
             ChatSession.user_id == current_user.id,
         )
     )
@@ -90,7 +105,7 @@ async def send_message(
 
     # Save user message
     user_msg = ChatMessage(
-        session_id=session_id, content=message_in.content, role="user"
+        session_id=session_uuid, content=message_in.content, role="user"
     )
     db.add(user_msg)
 
@@ -98,7 +113,7 @@ async def send_message(
     try:
         history_result = await db.execute(
             select(ChatMessage)
-            .filter(ChatMessage.session_id == session_id)
+            .filter(ChatMessage.session_id == session_uuid)
             .order_by(ChatMessage.created_at.desc())
             .limit(_MAX_CONTEXT_MESSAGES)
         )
@@ -121,7 +136,7 @@ async def send_message(
         )
 
     # Save AI response
-    ai_msg = ChatMessage(session_id=session_id, content=ai_text, role="assistant")
+    ai_msg = ChatMessage(session_id=session_uuid, content=ai_text, role="assistant")
     db.add(ai_msg)
     await db.commit()
     await db.refresh(ai_msg)
@@ -131,19 +146,20 @@ async def send_message(
 
 @router.get("/sessions/{session_id}/messages", response_model=ChatMessageListResponse)
 async def get_messages(
-    session_id: uuid.UUID,
+    session_id: str,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get messages in session (paginated)."""
+    session_uuid = _parse_uuid(session_id)
     skip = (page - 1) * limit
 
     # Verify session
     sess_result = await db.execute(
         select(ChatSession).filter(
-            ChatSession.id == session_id,
+            ChatSession.id == session_uuid,
             ChatSession.user_id == current_user.id,
         )
     )
@@ -152,7 +168,7 @@ async def get_messages(
 
     result = await db.execute(
         select(ChatMessage)
-        .filter(ChatMessage.session_id == session_id)
+        .filter(ChatMessage.session_id == session_uuid)
         .order_by(ChatMessage.created_at.asc())
         .offset(skip)
         .limit(limit)
@@ -163,14 +179,15 @@ async def get_messages(
 
 @router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
-    session_id: uuid.UUID,
+    session_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a chat session and all its messages."""
+    session_uuid = _parse_uuid(session_id)
     result = await db.execute(
         select(ChatSession).filter(
-            ChatSession.id == session_id,
+            ChatSession.id == session_uuid,
             ChatSession.user_id == current_user.id,
         )
     )
