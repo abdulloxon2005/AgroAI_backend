@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -10,23 +11,34 @@ import google.generativeai as genai
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
 
+def _to_uuid(val: uuid.UUID | str) -> uuid.UUID:
+    if isinstance(val, uuid.UUID):
+        return val
+    try:
+        return uuid.UUID(str(val))
+    except (ValueError, TypeError):
+        return val  # type: ignore
+
+
 class ChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
 
-    async def create_session(self, user_id: int) -> ChatSession:
-        session = ChatSession(user_id=user_id, title="Yangi suhbat")
+    async def create_session(self, user_id: uuid.UUID | str) -> ChatSession:
+        u_id = _to_uuid(user_id)
+        session = ChatSession(user_id=u_id, title="Yangi suhbat")
         self.db.add(session)
         await self.db.flush()
         await self.db.refresh(session, attribute_names=["messages"])
         return session
 
-    async def get_user_sessions(self, user_id: int) -> list:
+    async def get_user_sessions(self, user_id: uuid.UUID | str) -> list:
+        u_id = _to_uuid(user_id)
         result = await self.db.execute(
             select(ChatSession)
             .options(selectinload(ChatSession.messages))
-            .where(ChatSession.user_id == user_id)
+            .where(ChatSession.user_id == u_id)
             .order_by(ChatSession.updated_at.desc())
         )
         sessions = result.scalars().all()
@@ -42,28 +54,35 @@ class ChatService:
             for s in sessions
         ]
 
-    async def get_session(self, session_id: int, user_id: int) -> ChatSession:
+    async def get_session(
+        self, session_id: uuid.UUID | str, user_id: uuid.UUID | str
+    ) -> ChatSession:
+        s_id = _to_uuid(session_id)
+        u_id = _to_uuid(user_id)
+
         result = await self.db.execute(
             select(ChatSession)
             .options(selectinload(ChatSession.messages))
-            .where(ChatSession.id == session_id)
+            .where(ChatSession.id == s_id)
         )
         session = result.scalar_one_or_none()
 
         if not session:
             raise NotFoundException("Suhbat topilmadi")
-        if session.user_id != user_id:
+        if session.user_id != u_id:
             raise ForbiddenException("Bu suhbatga ruxsat yo'q")
 
         return session
 
     async def send_message(
-        self, session_id: int, user_id: int, message: str
+        self, session_id: uuid.UUID | str, user_id: uuid.UUID | str, message: str
     ) -> ChatSession:
-        session = await self.get_session(session_id, user_id)
+        s_id = _to_uuid(session_id)
+        u_id = _to_uuid(user_id)
+        session = await self.get_session(s_id, u_id)
 
         # Save user message
-        user_msg = ChatMessage(session_id=session_id, role="user", content=message)
+        user_msg = ChatMessage(session_id=s_id, role="user", content=message)
         self.db.add(user_msg)
 
         # Build conversation history for AgroAI
@@ -81,13 +100,13 @@ class ChatService:
 
         try:
             response = await self.model.generate_content_async(full_prompt)
-            ai_response = response.text
+            ai_response = response.text if response.text else "Javob shakllantirilmadi"
         except Exception:
-            ai_response = "Kechirasiz, hozirda javob berishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring."
+            ai_response = "Kechirasiz, hozirda javob berishda biroz uzilish yuz berdi. Iltimos, qayta urinib ko'ring."
 
         # Save AI response
         ai_msg = ChatMessage(
-            session_id=session_id, role="assistant", content=ai_response
+            session_id=s_id, role="assistant", content=ai_response
         )
         self.db.add(ai_msg)
         await self.db.flush()
@@ -98,13 +117,17 @@ class ChatService:
                 title_response = await self.model.generate_content_async(
                     f"Quyidagi suhbatga 5 so'zdan iborat sarlavha ber. Faqat sarlavhani yoz, boshqa hech narsa yozma:\n{message}"
                 )
-                session.title = title_response.text.strip()[:100]
+                if title_response.text:
+                    session.title = title_response.text.strip()[:100]
             except Exception:
                 pass
 
         await self.db.refresh(session, attribute_names=["messages"])
         return session
 
-    async def delete_session(self, session_id: int, user_id: int):
+    async def delete_session(
+        self, session_id: uuid.UUID | str, user_id: uuid.UUID | str
+    ):
         session = await self.get_session(session_id, user_id)
         await self.db.delete(session)
+

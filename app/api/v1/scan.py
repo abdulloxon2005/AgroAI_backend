@@ -196,7 +196,7 @@ async def get_scan_history(
 
 @router.get("/{scan_id}", response_model=ScanResponse)
 async def get_scan(
-    scan_id: str,
+    scan_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -212,7 +212,7 @@ async def get_scan(
 
 @router.delete("/{scan_id}", status_code=204)
 async def delete_scan(
-    scan_id: str,
+    scan_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

@@ -2,6 +2,7 @@
 AgroAI — Chat Endpoints
 AI Agronom chat sessions and messages via Gemini.
 """
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -70,7 +71,7 @@ async def list_sessions(
 
 @router.post("/sessions/{session_id}/messages", response_model=ChatMessageResponse)
 async def send_message(
-    session_id: str,
+    session_id: uuid.UUID,
     message_in: ChatMessageCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -114,8 +115,9 @@ async def send_message(
         ai_text = await generate_with_timeout(get_chat_model(), prompt)
     except Exception:
         ai_text = (
-            "Kechirasiz, hozirda javob bera olmayman. "
-            "Iltimos, keyinroq urinib ko'ring."
+            "Kechirasiz, sun'iy intellekt xizmati javob berishda biroz uzilishga uchradi. "
+            "Sizning savolingiz: '" + message_in.content + "'. "
+            "Qishloq xo'jaligi va ekinlar parvarishi bo'yicha savollaringiz bo'lsa qayta so'rashingiz mumkin."
         )
 
     # Save AI response
@@ -129,7 +131,7 @@ async def send_message(
 
 @router.get("/sessions/{session_id}/messages", response_model=ChatMessageListResponse)
 async def get_messages(
-    session_id: str,
+    session_id: uuid.UUID,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -161,7 +163,7 @@ async def get_messages(
 
 @router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
-    session_id: str,
+    session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -179,3 +181,4 @@ async def delete_session(
     await db.delete(session)
     await db.commit()
     return None
+
