@@ -59,13 +59,17 @@ app.add_middleware(
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# --- Static Files ---
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
-
 # --- Routes ---
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(ws_router, prefix="/ws")
+
+# --- Static Files & Web Landing Page ---
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
+web_dir = Path(__file__).resolve().parents[2] / "web"
+if web_dir.exists():
+    app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
 
 
 # --- Health Check ---
