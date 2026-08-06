@@ -24,6 +24,19 @@ from app.api.deps import get_current_user
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+import re
+
+
+def _normalize_phone(phone: str) -> str:
+    cleaned = re.sub(r'[^\d+]', '', phone.strip())
+    if not cleaned.startswith('+'):
+        if cleaned.startswith('998'):
+            cleaned = '+' + cleaned
+        else:
+            cleaned = '+998' + cleaned
+    return cleaned
+
+
 @router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit(settings.RATE_LIMIT_REGISTER)
 async def register(
@@ -32,14 +45,20 @@ async def register(
     db: AsyncSession = Depends(get_db),
 ):
     """Register a new user and return tokens + user info."""
+    clean_phone = _normalize_phone(user_in.phone)
+
     # Check if phone already exists
-    result = await db.execute(select(User).filter(User.phone == user_in.phone))
+    result = await db.execute(
+        select(User).filter(
+            (User.phone == user_in.phone) | (User.phone == clean_phone)
+        )
+    )
     if result.scalars().first():
         raise HTTPException(status_code=400, detail="Bu telefon raqami allaqachon ro'yxatdan o'tgan")
 
     hashed_pw = get_password_hash(user_in.password)
     new_user = User(
-        phone=user_in.phone,
+        phone=clean_phone,
         password_hash=hashed_pw,
         first_name=user_in.first_name,
         last_name=user_in.last_name,
@@ -77,7 +96,18 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     """Verify phone and password, return tokens + user info."""
-    result = await db.execute(select(User).filter(User.phone == login_in.phone))
+    raw_phone = login_in.phone.strip()
+    clean_phone = _normalize_phone(raw_phone)
+    digits_only = re.sub(r'\D', '', raw_phone)
+
+    # Search user matching raw, clean, or digits
+    result = await db.execute(
+        select(User).filter(
+            (User.phone == raw_phone) |
+            (User.phone == clean_phone) |
+            (User.phone.like(f"%{digits_only[-9:]}%") if len(digits_only) >= 9 else User.phone == raw_phone)
+        )
+    )
     user = result.scalars().first()
     if not user or not verify_password(login_in.password, user.password_hash):
         raise HTTPException(

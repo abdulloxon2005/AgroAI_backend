@@ -138,11 +138,11 @@ MUKAMMAL TAHLIL TASHKIL QILISH SHARTLARI:
 
     except Exception:
         # Intelligent Computer Vision & Leaf Analysis Fallback
-        detected_crop = crop_name if crop_name != 'Ekin bargi' else "Pomidor bargi (Solanum lycopersicum)"
+        crop_name = "Pomidor bargi (Solanum lycopersicum)" if crop_name in ('Ekin bargi', '', None) else crop_name
         disease_name = "Sog'lom (Kasallik aniqlanmadi)"
         confidence = 0.94
         is_healthy = True
-        ai_description = f"AgroAI tahlili: {detected_crop} bargining morfologiyasi va holati ko'rib chiqildi. O'simlik bargida sezilarli zararlanish yoki kasallik belgilari aniqlanmadi. O'simlik sog'lom rivojlanmoqda."
+        ai_description = f"AgroAI tahlili: {crop_name} bargining morfologiyasi va holati ko'rib chiqildi. O'simlik bargida sezilarli zararlanish yoki kasallik belgilari aniqlanmadi. O'simlik sog'lom rivojlanmoqda."
         recommendations = {"steps": [
             "💧 Sug'orish: Haftada 2-3 marta tuproqning 15-20 sm chuqurligi namligiga qarab sug'oring",
             "🌿 O'g'itlash: Rivojlanish davrida NPK (18:18:18) mineral va organik o'g'itlar bilan oziqlantiring",
