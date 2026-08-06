@@ -108,11 +108,13 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle all unhandled exceptions with a generic 500 response."""
     import structlog
+    import traceback
+    traceback.print_exc()
     logger = structlog.get_logger()
     logger.exception("unhandled_exception", error=str(exc), path=request.url.path)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Ichki server xatosi", "error_code": "INTERNAL_ERROR"}
+        content={"detail": f"Ichki server xatosi: {type(exc).__name__} - {str(exc)}", "error_code": "INTERNAL_ERROR"}
     )
 
 
